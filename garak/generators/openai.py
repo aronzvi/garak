@@ -17,6 +17,7 @@ from typing import List
 
 import openai
 import backoff
+import json
 
 from garak.generators.base import Generator
 
@@ -62,6 +63,7 @@ class OpenAIGenerator(Generator):
     def __init__(self, name, generations=10):
         self.name = name
         self.fullname = f"OpenAI {self.name}"
+        self.headers = {}
 
         super().__init__(name, generations=generations)
 
@@ -71,6 +73,13 @@ class OpenAIGenerator(Generator):
                 'Put the OpenAI API key in the OPENAI_API_KEY environment variable (this was empty)\n \
                 e.g.: export OPENAI_API_KEY="sk-123XXXXXXXXXXXX"'
             )
+        
+        api_base = os.getenv("OPENAI_BASE_URL", default=None)
+        if api_base is not None:
+            openai.api_base = api_base
+        headers = os.getenv("OPENAI_HEADERS", default=None)
+        if headers is not None:
+            self.headers = json.loads(headers)
 
         if self.name in completion_models:
             self.generator = openai.Completion
@@ -122,7 +131,9 @@ class OpenAIGenerator(Generator):
             return [c["text"] for c in response["choices"]]
 
         elif self.generator == openai.ChatCompletion:
+            print("chat completion")
             response = self.generator.create(
+                headers=self.headers,
                 model=self.name,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=self.temperature,

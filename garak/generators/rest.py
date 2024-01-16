@@ -18,7 +18,7 @@ import backoff
 
 from garak import _config
 from garak.generators.base import Generator
-
+import dpath
 
 class RESTRateLimitError(Exception):
     """Raised when a rate limiting response is returned"""
@@ -105,14 +105,16 @@ class RestGenerator(Generator):
         self.req_template = "$INPUT"
         self.supports_multiple_generations = False  # not implemented yet
         self.response_json = False
-        self.response_json_field = "text"
+        self.response_json_field = None #"text"
+        self.response_json_path = None
         self.request_timeout = 10  # seconds
         self.ratelimit_codes = [429]
         self.escape_function = self._json_escape
         self.retry_5xx = True
         self.key_env_var = "REST_API_KEY"
 
-        if "rest" in dir(_config.plugins.generators):
+        #if "rest" in dir(_config.plugins.generators):
+        if "rest" in _config.plugins.generators.keys():
             for field in (
                 "name",
                 "uri",
@@ -125,7 +127,7 @@ class RestGenerator(Generator):
                 "ratelimit_codes",
             ):
                 if field in _config.plugins.generators["rest"]:
-                    setattr(self, field, _config.plugins.generator["rest"][field])
+                    setattr(self, field, _config.plugins.generators["rest"][field])
 
             if "req_template_json_object" in _config.plugins.generators["rest"]:
                 self.req_template = json.dumps(
@@ -138,6 +140,10 @@ class RestGenerator(Generator):
             ):
                 self.response_json_field = _config.plugins.generators["rest"][
                     "response_json_field"
+                ]
+            elif self.response_json and "response_json_path" in _config.plugins.generators["rest"]:
+                self.response_json_path = _config.plugins.generators["rest"][
+                    "response_json_path"
                 ]
 
         if self.name is None:
@@ -248,7 +254,11 @@ class RestGenerator(Generator):
 
         try:
             response_object = json.loads(resp.content)
-            return response_object[self.response_json_field]
+            if self.response_json_field:
+                return response_object[self.response_json_field]
+            elif self.response_json_path:
+                return dpath.get(response_object, self.response_json_path)
+            
         except json.decoder.JSONDecodeError as e:
             logging.warning(
                 "REST endpoint didn't return good JSON %s: got |%s|",

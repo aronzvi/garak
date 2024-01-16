@@ -1,0 +1,20 @@
+ {
+    "rest": {
+        "name": "Assistant",
+        "uri": "https://api-gw-dev-research.knostic.cloud/api/v1.0/openai/v1/chat/completions",
+        "method": "post",
+        "headers": { 
+            "Authorization": "Bearer $KEY",
+            "Content-Type": "application/json",
+            "x-knostic-api-key": "KNOSTIC_API_KEY_HERE"
+        },
+        "req_template_json_object": {
+            "model": "gpt-4",
+            "temperature": 0.5,
+            "messages": [{"role": "user", "content": "$INPUT"}]
+        },
+        "response_json": true,
+        "response_json_path": "/choices/0/message/content",
+        "request_timeout": 60
+    }
+}

@@ -1,0 +1,20 @@
+ {
+    "rest": {
+        "name": "Assistant",
+        "uri": "https://knostic-gendesk-backend-prod.up.railway.app/api/v1.0/sandbox/experiments",
+        "method": "post",
+        "headers": { 
+            "X-Authorization": "Bearer $KEY",
+            "Content-Type": "application/json"
+        },
+        "req_template_json_object": {
+            "question": "$INPUT",
+            "requesterRole": "vp_sales",
+            "plugins": ["lightning-cyber","openai"],
+            "requesterUser": ""
+        },
+        "response_json": true,
+        "response_json_field": "answer",
+        "request_timeout": 40
+    }
+}
